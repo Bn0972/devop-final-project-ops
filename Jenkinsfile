@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Docker Hub username
         DOCKER_REGISTRY = 'browncorry'
-        APP_NAME = 'Uni-Dashboard'
+        APP_NAME = 'uni-dashboard'
         VERSION = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#deployments'
         EMAIL_RECIPIENTS = 'corrynn7487@gmail.com'
