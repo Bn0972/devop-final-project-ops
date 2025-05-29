@@ -1,6 +1,6 @@
 pipeline {
     agent any
-    
+
     environment {
         DOCKER_REGISTRY = 'browncorry'
         APP_NAME = 'egg-timer-app'
@@ -8,21 +8,24 @@ pipeline {
         SLACK_CHANNEL = '#deployments'
         EMAIL_RECIPIENTS = 'corrynn7487@gmail.com'
     }
-    
+
     stages {
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        
+
         stage('Build and Test') {
             steps {
-                sh 'echo "Running tests..."'
-                // Add your test commands here
+                script {
+                    runCmd('echo "Running tests on Linux..."', 'echo Running tests on Windows...')
+                    // 示例：可以替换为测试命令
+                    // runCmd('./run_tests.sh', 'run_tests.bat')
+                }
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
                 script {
@@ -30,36 +33,42 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry('https://${DOCKER_REGISTRY}', 'docker-credentials') {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
                         docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
                     }
                 }
             }
         }
-        
+
         stage('Deploy to Staging') {
             steps {
                 script {
                     try {
-                        sh "docker-compose -f docker-compose.staging.yml up -d"
-                        // Wait for health check
+                        runCmd(
+                            'docker-compose -f docker-compose.staging.yml up -d',
+                            'docker-compose -f docker-compose.staging.yml up -d'
+                        )
                         sleep 30
-                        // Verify deployment
-                        sh "curl -f http://staging.egg-timer-app/health || exit 1"
+                        runCmd(
+                            'curl -f http://staging.egg-timer-app/health || exit 1',
+                            'curl -f http://staging.egg-timer-app/health || exit /b 1'
+                        )
                     } catch (Exception e) {
-                        // Rollback on failure
-                        sh "docker-compose -f docker-compose.staging.yml down"
+                        runCmd(
+                            'docker-compose -f docker-compose.staging.yml down',
+                            'docker-compose -f docker-compose.staging.yml down'
+                        )
                         currentBuild.result = 'FAILURE'
                         throw e
                     }
                 }
             }
         }
-        
+
         stage('Deploy to Production') {
             when {
                 branch 'main'
@@ -67,14 +76,20 @@ pipeline {
             steps {
                 script {
                     try {
-                        sh "docker-compose -f docker-compose.prod.yml up -d"
-                        // Wait for health check
+                        runCmd(
+                            'docker-compose -f docker-compose.prod.yml up -d',
+                            'docker-compose -f docker-compose.prod.yml up -d'
+                        )
                         sleep 30
-                        // Verify deployment
-                        sh "curl -f http://prod.egg-timer-app/health || exit 1"
+                        runCmd(
+                            'curl -f http://prod.egg-timer-app/health || exit 1',
+                            'curl -f http://prod.egg-timer-app/health || exit /b 1'
+                        )
                     } catch (Exception e) {
-                        // Rollback on failure
-                        sh "docker-compose -f docker-compose.prod.yml down"
+                        runCmd(
+                            'docker-compose -f docker-compose.prod.yml down',
+                            'docker-compose -f docker-compose.prod.yml down'
+                        )
                         currentBuild.result = 'FAILURE'
                         throw e
                     }
@@ -82,11 +97,10 @@ pipeline {
             }
         }
     }
-    
+
     post {
         success {
             script {
-                // Send success notifications
                 slackSend(
                     channel: "${SLACK_CHANNEL}",
                     color: 'good',
@@ -101,7 +115,6 @@ pipeline {
         }
         failure {
             script {
-                // Send failure notifications
                 slackSend(
                     channel: "${SLACK_CHANNEL}",
                     color: 'danger',
@@ -115,4 +128,12 @@ pipeline {
             }
         }
     }
-} 
+}
+
+def runCmd(String unixCmd, String windowsCmd) {
+    if (isUnix()) {
+        sh unixCmd
+    } else {
+        bat windowsCmd
+    }
+}
