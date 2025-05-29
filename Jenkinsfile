@@ -2,6 +2,8 @@ pipeline {
     agent any
 
     environment {
+        // Docker Hub username
+        DOCKER_REGISTRY = 'browncorry'
         APP_NAME = 'egg-timer-app'
         VERSION = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#deployments'
@@ -26,8 +28,9 @@ pipeline {
         stage('Set Docker Context') {
             steps {
                 script {
-                    // if can not find desktop-linux context，switch to default
-                    runCmd('docker context use default || echo "default context not found, continuing"', 
+                    //if can not find desktop-linux context，switch to default
+
+                    runCmd('docker context use default || echo "default context not found, continuing"',
                            'docker context use default || echo "default context not found, continuing"')
                 }
             }
@@ -36,7 +39,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${APP_NAME}:${VERSION}")
+                    docker.build("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}")
                 }
             }
         }
@@ -44,10 +47,10 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    // empty string means Docker Hub default
-                    docker.withRegistry('', 'docker-credentials') {
-                        docker.image("${APP_NAME}:${VERSION}").push()
-                    }
+                        // empty string means Docker Hub default
+                        docker.withRegistry('', 'docker-credentials') {
+                        docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
+                        }
                 }
             }
         }
@@ -114,9 +117,9 @@ pipeline {
                     color: 'good',
                     message: "Deployment Successful: ${APP_NAME} v${VERSION}"
                 )
-                emailext (
+                emailext(
                     subject: "Deployment Successful: ${APP_NAME} v${VERSION}",
-                    body: "The deployment was successful.",
+                    body: 'The deployment was successful.',
                     to: "${EMAIL_RECIPIENTS}"
                 )
             }
@@ -128,9 +131,9 @@ pipeline {
                     color: 'danger',
                     message: "Deployment Failed: ${APP_NAME} v${VERSION}"
                 )
-                emailext (
+                emailext(
                     subject: "Deployment Failed: ${APP_NAME} v${VERSION}",
-                    body: "The deployment failed. Please check Jenkins for details.",
+                    body: 'The deployment failed. Please check Jenkins for details.',
                     to: "${EMAIL_RECIPIENTS}"
                 )
             }
