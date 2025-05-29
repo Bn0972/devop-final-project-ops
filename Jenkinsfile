@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git url: 'https://github.com/pleszkowska/egg-timer-app.git', branch: 'main'
             }
         }
 
