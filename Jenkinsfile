@@ -113,8 +113,8 @@ pipeline {
                         )
                         sleep 30
                         runCmd(
-                            'curl -f http://localhost:3000 || exit 1',
-                            'curl -f http://localhost:3000 || exit /b 1'
+                            'curl -f http://localhost:3050 || exit 1',
+                            'curl -f http://localhost:3050 || exit /b 1'
                         )
                     } catch (Exception e) {
                         runCmd(
