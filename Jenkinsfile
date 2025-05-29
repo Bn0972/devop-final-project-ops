@@ -58,6 +58,7 @@ pipeline {
         stage('Debug Workspace') {
             steps {
                 script {
+                    echo "Current branch: ${env.BRANCH_NAME}"
                     if (isUnix()) {
                         sh 'pwd && ls -l'
                     } else {
