@@ -55,6 +55,18 @@ pipeline {
             }
         }
 
+        stage('Debug Workspace') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh 'pwd && ls -l'
+            } else {
+                        bat 'cd && dir'
+                    }
+                }
+            }
+        }
+
         stage('Deploy to Staging') {
             steps {
                 script {
