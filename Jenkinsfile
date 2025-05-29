@@ -36,7 +36,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}")
+                    docker.build("${APP_NAME}:${VERSION}")
                 }
             }
         }
@@ -46,7 +46,7 @@ pipeline {
                 script {
                     // empty string means Docker Hub default
                     docker.withRegistry('', 'docker-credentials') {
-                        docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
+                        docker.image("${APP_NAME}:${VERSION}").push()
                     }
                 }
             }
