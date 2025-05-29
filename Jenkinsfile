@@ -30,7 +30,6 @@ pipeline {
             steps {
                 script {
                     //if can not find desktop-linux context，switch to default
-
                     runCmd('docker context use default || echo "default context not found, continuing"',
                            'docker context use default || echo "default context not found, continuing"')
                 }
@@ -49,9 +48,9 @@ pipeline {
             steps {
                 script {
                         // empty string means Docker Hub default
-                        docker.withRegistry('', 'docker-credentials') {
+                    docker.withRegistry('', 'docker-credentials') {
                         docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
-                        }
+                    }
                 }
             }
         }
@@ -61,7 +60,7 @@ pipeline {
                 script {
                     if (isUnix()) {
                         sh 'pwd && ls -l'
-            } else {
+                    } else {
                         bat 'cd && dir'
                     }
                 }
@@ -78,8 +77,8 @@ pipeline {
                         )
                         sleep 30
                         runCmd(
-                            'curl -f http://staging.egg-timer-app/health || exit 1',
-                            'curl -f http://staging.egg-timer-app/health || exit /b 1'
+                            'curl -f http://localhost:8081/health || exit 1',
+                            'curl -f http://localhost:8081/health || exit /b 1'
                         )
                     } catch (Exception e) {
                         runCmd(
@@ -106,8 +105,8 @@ pipeline {
                         )
                         sleep 30
                         runCmd(
-                            'curl -f http://prod.egg-timer-app/health || exit 1',
-                            'curl -f http://prod.egg-timer-app/health || exit /b 1'
+                            'curl -f http://localhost:80/health || exit 1',
+                            'curl -f http://localhost:80/health || exit /b 1'
                         )
                     } catch (Exception e) {
                         runCmd(
