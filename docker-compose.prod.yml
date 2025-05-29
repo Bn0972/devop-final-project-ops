@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  egg-timer-app:
+    image: ${DOCKER_REGISTRY}/egg-timer-app:${VERSION}
+    container_name: egg-timer-app-prod
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - egg-timer-network
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+      rollback_config:
+        parallelism: 0
+        order: stop-first
+
+networks:
+  egg-timer-network:
+    driver: bridge 
