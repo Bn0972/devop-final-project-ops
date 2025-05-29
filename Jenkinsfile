@@ -58,7 +58,8 @@ pipeline {
         stage('Debug Workspace') {
             steps {
                 script {
-                    echo "Current branch: ${env.BRANCH_NAME}"
+                    echo "Current env.BRANCH_NAME: ${env.BRANCH_NAME}"
+                    echo "Current env.GIT_BRANCH: ${env.GIT_BRANCH}"
                     if (isUnix()) {
                         sh 'pwd && ls -l'
                     } else {
@@ -94,8 +95,14 @@ pipeline {
         }
 
         stage('Deploy to Production') {
+            // when {
+            //     branch 'main'
+            // }
             when {
-                branch 'main'
+            expression {
+            // 兼容 env.BRANCH_NAME 和 GIT_BRANCH 都为空或不一致的情况
+            return env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main'
+                }
             }
             steps {
                 script {
