@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_REGISTRY = 'browncorry'
         APP_NAME = 'egg-timer-app'
         VERSION = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#deployments'
@@ -20,8 +19,16 @@ pipeline {
             steps {
                 script {
                     runCmd('echo "Running tests on Linux..."', 'echo Running tests on Windows...')
-                    // 示例：可以替换为测试命令
-                    // runCmd('./run_tests.sh', 'run_tests.bat')
+                }
+            }
+        }
+
+        stage('Set Docker Context') {
+            steps {
+                script {
+                    // if can not find desktop-linux context，switch to default
+                    runCmd('docker context use default || echo "default context not found, continuing"', 
+                           'docker context use default || echo "default context not found, continuing"')
                 }
             }
         }
@@ -37,7 +44,8 @@ pipeline {
         stage('Push to Registry') {
             steps {
                 script {
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", 'docker-credentials') {
+                    // empty string means Docker Hub default
+                    docker.withRegistry('', 'docker-credentials') {
                         docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
                     }
                 }
