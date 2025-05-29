@@ -13,7 +13,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/pleszkowska/egg-timer-app.git', branch: 'main'
+                //Both dashboard and egg-timer-app are based on HTML CSS JS.
+                git url: 'https://github.com/Bn0972/UniDashboard-html-css.git', branch: 'main'
             }
         }
 
