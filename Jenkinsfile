@@ -77,8 +77,8 @@ pipeline {
                         )
                         sleep 30
                         runCmd(
-                            'curl -f http://localhost:8081 || exit 1',
-                            'curl -f http://localhost:8081 || exit /b 1'
+                            'curl -f http://localhost:8081/health || exit 1',
+                            'curl -f http://localhost:8081/health || exit /b 1'
                         )
                     } catch (Exception e) {
                         runCmd(
@@ -105,8 +105,8 @@ pipeline {
                         )
                         sleep 30
                         runCmd(
-                            'curl -f http://localhost:80 || exit 1',
-                            'curl -f http://localhost:80 || exit /b 1'
+                            'curl -f http://localhost:80/health || exit 1',
+                            'curl -f http://localhost:80/health || exit /b 1'
                         )
                     } catch (Exception e) {
                         runCmd(
