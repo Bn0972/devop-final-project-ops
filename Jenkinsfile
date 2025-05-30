@@ -12,7 +12,7 @@ pipeline {
     }
 
     stages {
-        //Test email send
+        // Test sending email (commented out previously)
         // stage('Test Email') {
         //     steps {
         //         emailext(
@@ -26,7 +26,7 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                //Both dashboard and egg-timer-app are based on HTML CSS JS.
+                // Clone the repository, main branch
                 git url: 'https://github.com/Bn0972/UniDashboard-html-css.git', branch: 'main'
             }
         }
@@ -34,6 +34,7 @@ pipeline {
         stage('Build and Test') {
             steps {
                 script {
+                    // Place test commands here, differentiate Linux and Windows execution
                     runCmd('echo "Running tests on Linux..."', 'echo Running tests on Windows...')
                 }
             }
@@ -42,16 +43,18 @@ pipeline {
         stage('Set Docker Context') {
             steps {
                 script {
-                    //if can not find desktop-linux context，switch to default
+                    // Set docker context, if default not found continue without error
                     runCmd('docker context use default || echo "default context not found, continuing"',
                            'docker context use default || echo "default context not found, continuing"')
                 }
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build Docker Images') {
             steps {
                 script {
+                    // Build two tagged images: latest and build number version
+                    docker.build(LATEST_IMAGE)
                     docker.build("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}")
                 }
             }
@@ -61,59 +64,35 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', 'docker-credentials') {
-                        // Pull latest as previous, handle error if latest not exist
+                        // Push the version-tagged image first
+                        docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
+
+                        // Push the latest tag image next
+                        docker.image(LATEST_IMAGE).push()
+
+                        // Try to pull latest tag image; if not exist, ignore errors
                         try {
-                            // 拉取 latest 镜像，失败不报错
                             runCmd(
                                 "docker pull ${LATEST_IMAGE} || true",
                                 "docker pull ${LATEST_IMAGE} || exit 0"
                             )
                         } catch (Exception e) {
-                            echo "No latest image to tag as previous, continuing..."
+                            echo "No latest image to tag as previous, skipping tag of previous image."
                         }
 
-                        // 判断本地是否存在 latest 镜像
-                        def latestExists = false
-                        if (isUnix()) {
-                            def output = sh(script: "docker images -q ${LATEST_IMAGE}", returnStdout: true).trim()
-                            if (output) {
-                                latestExists = true
-                            }
-                        } else {
-                            def output = bat(script: "docker images -q ${LATEST_IMAGE}", returnStdout: true).trim()
-                            if (output) {
-                                latestExists = true
-                            }
+                        // If pull succeeded, tag it as previous and push
+                        try {
+                            runCmd(
+                                "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE}",
+                                "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE}"
+                            )
+                            runCmd(
+                                "docker push ${PREVIOUS_IMAGE}",
+                                "docker push ${PREVIOUS_IMAGE}"
+                            )
+                        } catch (Exception e) {
+                            echo "Tagging or pushing previous image skipped."
                         }
-
-                        if (latestExists) {
-                            echo "Latest image found locally, tagging and pushing as previous."
-                            try {
-                                runCmd(
-                                    "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE}",
-                                    "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE}"
-                                )
-                                runCmd(
-                                    "docker push ${PREVIOUS_IMAGE}",
-                                    "docker push ${PREVIOUS_IMAGE}"
-                                )
-                            } catch (Exception e) {
-                                echo "Tagging or pushing previous image skipped due to error: ${e}"
-                            }
-                        } else {
-                            echo "No latest image locally, skipping tag and push previous."
-                        }
-
-                        // Push new version and set as latest
-                        docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
-                        runCmd(
-                            "docker tag ${DOCKER_REGISTRY}/${APP_NAME}:${VERSION} ${LATEST_IMAGE}",
-                            "docker tag ${DOCKER_REGISTRY}\\${APP_NAME}:${VERSION} ${LATEST_IMAGE}"
-                        )
-                        runCmd(
-                            "docker push ${LATEST_IMAGE}",
-                            "docker push ${LATEST_IMAGE}"
-                        )
                     }
                 }
             }
@@ -150,12 +129,8 @@ pipeline {
         }
 
         stage('Deploy to Production') {
-            // when {
-            //     branch 'main'
-            // }
             when {
                 expression {
-                    // Compatible with the case where both env.BRANCH_NAME and GIT_BRANCH are empty or inconsistent
                     return env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main'
                 }
             }
@@ -168,7 +143,7 @@ pipeline {
                     } catch (Exception e) {
                         echo "Production deployment failed. Rolling back to previous image..."
 
-                        // Replace version env with :previous
+                        // Roll back to previous tag
                         env.VERSION = "previous"
 
                         runCmd('docker-compose -f docker-compose.prod.yml down', 'docker-compose -f docker-compose.prod.yml down')
@@ -220,6 +195,7 @@ pipeline {
     }
 }
 
+// Helper function to run shell on Unix or bat on Windows
 def runCmd(String unixCmd, String windowsCmd) {
     if (isUnix()) {
         sh unixCmd
