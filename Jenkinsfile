@@ -142,7 +142,9 @@ pipeline {
                     body: 'The deployment was successful.',
                     to: "corrynn7487@gmail.com",
                     from: "corrynn7487@gmail.com", 
-                    replyTo: "corrynn7487@gmail.com"
+                    replyTo: "corrynn7487@gmail.com",
+                    mimeType: 'text/plain',
+                    debug: true
                 )
             }
         }
@@ -158,7 +160,9 @@ pipeline {
                     body: 'The deployment failed. Please check Jenkins for details.',
                     to: "corrynn7487@gmail.com",
                     from: "corrynn7487@gmail.com", 
-                    replyTo: "corrynn7487@gmail.com"
+                    replyTo: "corrynn7487@gmail.com",
+                    mimeType: 'text/plain',
+                    debug: true
                 )
             }
         }
