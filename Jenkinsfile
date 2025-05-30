@@ -59,21 +59,37 @@ pipeline {
 
         stage('Tag and Push Images') {
             steps {
-                script {
-                    docker.withRegistry('', 'docker-credentials') {
-                        // Pull latest as previous
-                        sh "docker pull ${LATEST_IMAGE} || echo 'No latest image to tag as previous'"
-                        sh "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE} || echo 'Tagging skipped'"
-                        sh "docker push ${PREVIOUS_IMAGE} || echo 'Push skipped'"
+            script {
+            docker.withRegistry('', 'docker-credentials') {
+                // Pull latest as previous
+                runCmd(
+                    "docker pull ${LATEST_IMAGE} || echo 'No latest image to tag as previous'",
+                    "docker pull ${LATEST_IMAGE} || echo No latest image to tag as previous"
+                )
+                runCmd(
+                    "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE} || echo 'Tagging skipped'",
+                    "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE} || echo Tagging skipped"
+                )
+                runCmd(
+                    "docker push ${PREVIOUS_IMAGE} || echo 'Push skipped'",
+                    "docker push ${PREVIOUS_IMAGE} || echo Push skipped"
+                )
 
-                        // Push new version and set as latest
-                        docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
-                        sh "docker tag ${DOCKER_REGISTRY}/${APP_NAME}:${VERSION} ${LATEST_IMAGE}"
-                        sh "docker push ${LATEST_IMAGE}"
-                    }
-                }
+                // Push new version and set as latest
+                docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
+                runCmd(
+                    "docker tag ${DOCKER_REGISTRY}/${APP_NAME}:${VERSION} ${LATEST_IMAGE}",
+                    "docker tag ${DOCKER_REGISTRY}\\${APP_NAME}:${VERSION} ${LATEST_IMAGE}"
+                )
+                runCmd(
+                    "docker push ${LATEST_IMAGE}",
+                    "docker push ${LATEST_IMAGE}"
+                )
             }
         }
+    }
+}
+
 
         stage('Debug Workspace') {
             steps {
