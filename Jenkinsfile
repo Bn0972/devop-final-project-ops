@@ -143,8 +143,7 @@ pipeline {
                     to: "corrynn7487@gmail.com",
                     from: "corrynn7487@gmail.com", 
                     replyTo: "corrynn7487@gmail.com",
-                    mimeType: 'text/plain',
-                    debug: true
+                    mimeType: 'text/plain'
                 )
             }
         }
@@ -161,8 +160,7 @@ pipeline {
                     to: "corrynn7487@gmail.com",
                     from: "corrynn7487@gmail.com", 
                     replyTo: "corrynn7487@gmail.com",
-                    mimeType: 'text/plain',
-                    debug: true
+                    mimeType: 'text/plain'
                 )
             }
         }
