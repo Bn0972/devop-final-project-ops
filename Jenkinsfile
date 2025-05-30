@@ -61,19 +61,29 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', 'docker-credentials') {
-                        // Pull latest as previous
-                        runCmd(
-                            "docker pull ${LATEST_IMAGE} || echo 'No latest image to tag as previous'",
-                            "docker pull ${LATEST_IMAGE} || echo No latest image to tag as previous"
-                        )
-                        runCmd(
-                            "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE} || echo 'Tagging skipped'",
-                            "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE} || echo Tagging skipped"
-                        )
-                        runCmd(
-                            "docker push ${PREVIOUS_IMAGE} || echo 'Push skipped'",
-                            "docker push ${PREVIOUS_IMAGE} || echo Push skipped"
-                        )
+                        // Pull latest as previous, handle error if latest not exist
+                        try {
+                            runCmd(
+                                "docker pull ${LATEST_IMAGE}",
+                                "docker pull ${LATEST_IMAGE}"
+                            )
+                        } catch (Exception e) {
+                            echo "No latest image to tag as previous, continuing..."
+                        }
+
+                        // Tag and push previous image, skip on error
+                        try {
+                            runCmd(
+                                "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE}",
+                                "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE}"
+                            )
+                            runCmd(
+                                "docker push ${PREVIOUS_IMAGE}",
+                                "docker push ${PREVIOUS_IMAGE}"
+                            )
+                        } catch (Exception e) {
+                            echo "Tagging or pushing previous image skipped."
+                        }
 
                         // Push new version and set as latest
                         docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
@@ -89,6 +99,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Debug Workspace') {
             steps {
