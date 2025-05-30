@@ -1,2 +1,1 @@
-# egg-timer-app-ops-new
-A DevOp pipline for egg-timer app.
+A university dashboard page with html css and chart.js.
