@@ -63,7 +63,7 @@ pipeline {
                     docker.withRegistry('', 'docker-credentials') {
                         // Pull latest as previous, handle error if latest not exist
                         try {
-                            // Add || true or || exit 0 to the command to avoid exceptions caused by command failure
+                            // 拉取 latest 镜像，失败不报错
                             runCmd(
                                 "docker pull ${LATEST_IMAGE} || true",
                                 "docker pull ${LATEST_IMAGE} || exit 0"
@@ -75,18 +75,19 @@ pipeline {
                         // 判断本地是否存在 latest 镜像
                         def latestExists = false
                         if (isUnix()) {
-                            def result = sh(script: "docker images -q ${LATEST_IMAGE}", returnStdout: true).trim()
-                            if (result) {
+                            def output = sh(script: "docker images -q ${LATEST_IMAGE}", returnStdout: true).trim()
+                            if (output) {
                                 latestExists = true
                             }
                         } else {
-                            def result = bat(script: "docker images -q ${LATEST_IMAGE}", returnStdout: true).trim()
-                            if (result) {
+                            def output = bat(script: "docker images -q ${LATEST_IMAGE}", returnStdout: true).trim()
+                            if (output) {
                                 latestExists = true
                             }
                         }
 
                         if (latestExists) {
+                            echo "Latest image found locally, tagging and pushing as previous."
                             try {
                                 runCmd(
                                     "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE}",
@@ -97,10 +98,10 @@ pipeline {
                                     "docker push ${PREVIOUS_IMAGE}"
                                 )
                             } catch (Exception e) {
-                                echo "Tagging or pushing previous image skipped."
+                                echo "Tagging or pushing previous image skipped due to error: ${e}"
                             }
                         } else {
-                            echo "Local latest image does not exist, skipping tag as previous."
+                            echo "No latest image locally, skipping tag and push previous."
                         }
 
                         // Push new version and set as latest
