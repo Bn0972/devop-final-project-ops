@@ -100,7 +100,7 @@ pipeline {
             // }
             when {
             expression {
-            // 兼容 env.BRANCH_NAME 和 GIT_BRANCH 都为空或不一致的情况
+            // Compatible with the case where both env.BRANCH_NAME and GIT_BRANCH are empty or inconsistent
             return env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main'
                 }
             }
