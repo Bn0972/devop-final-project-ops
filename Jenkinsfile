@@ -12,16 +12,16 @@ pipeline {
 
     stages {
         //Test email send
-        stage('Test Email') {
-            steps {
-                emailext(
-                    subject: "Jenkins Email Test",
-                    body: "If you receive this email, Jenkins mail is configured correctly.",
-                    to: "corrynn7487@gmail.com",
-                    mimeType: 'text/plain'
-                )
-            }
-        }
+        // stage('Test Email') {
+        //     steps {
+        //         emailext(
+        //             subject: "Jenkins Email Test",
+        //             body: "If you receive this email, Jenkins mail is configured correctly.",
+        //             to: "corrynn7487@gmail.com",
+        //             mimeType: 'text/plain'
+        //         )
+        //     }
+        // }
 
         stage('Checkout') {
             steps {
