@@ -63,9 +63,10 @@ pipeline {
                     docker.withRegistry('', 'docker-credentials') {
                         // Pull latest as previous, handle error if latest not exist
                         try {
+                            // Add || true or || exit 0 to the command to avoid exceptions caused by command failure
                             runCmd(
-                                "docker pull ${LATEST_IMAGE}",
-                                "docker pull ${LATEST_IMAGE}"
+                                "docker pull ${LATEST_IMAGE} || true",
+                                "docker pull ${LATEST_IMAGE} || exit 0"
                             )
                         } catch (Exception e) {
                             echo "No latest image to tag as previous, continuing..."
@@ -99,7 +100,6 @@ pipeline {
                 }
             }
         }
-
 
         stage('Debug Workspace') {
             steps {
