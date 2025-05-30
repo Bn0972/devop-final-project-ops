@@ -7,7 +7,7 @@ pipeline {
         APP_NAME = 'uni-dashboard'
         VERSION = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#deployments'
-        EMAIL_RECIPIENTS = 'corrynn7487@gmail.com'
+        // EMAIL_RECIPIENTS = 'corrynn7487@gmail.com'
     }
 
     stages {
@@ -140,9 +140,9 @@ pipeline {
                 emailext(
                     subject: "Deployment Successful: ${APP_NAME} v${VERSION}",
                     body: 'The deployment was successful.',
-                    to: "${EMAIL_RECIPIENTS}",
-                    from: "${EMAIL_RECIPIENTS}", 
-                    replyTo: "${EMAIL_RECIPIENTS}"
+                    to: "corrynn7487@gmail.com",
+                    from: "corrynn7487@gmail.com", 
+                    replyTo: "corrynn7487@gmail.com"
                 )
             }
         }
@@ -156,9 +156,9 @@ pipeline {
                 emailext(
                     subject: "Deployment Failed: ${APP_NAME} v${VERSION}",
                     body: 'The deployment failed. Please check Jenkins for details.',
-                    to: "${EMAIL_RECIPIENTS}",
-                    from: "${EMAIL_RECIPIENTS}", 
-                    replyTo: "${EMAIL_RECIPIENTS}"
+                    to: "corrynn7487@gmail.com",
+                    from: "corrynn7487@gmail.com", 
+                    replyTo: "corrynn7487@gmail.com"
                 )
             }
         }
