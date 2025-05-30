@@ -140,7 +140,9 @@ pipeline {
                 emailext(
                     subject: "Deployment Successful: ${APP_NAME} v${VERSION}",
                     body: 'The deployment was successful.',
-                    to: "${EMAIL_RECIPIENTS}"
+                    to: "${EMAIL_RECIPIENTS}",
+                    from: "${EMAIL_RECIPIENTS}", 
+                    replyTo: "${EMAIL_RECIPIENTS}"
                 )
             }
         }
@@ -154,7 +156,9 @@ pipeline {
                 emailext(
                     subject: "Deployment Failed: ${APP_NAME} v${VERSION}",
                     body: 'The deployment failed. Please check Jenkins for details.',
-                    to: "${EMAIL_RECIPIENTS}"
+                    to: "${EMAIL_RECIPIENTS}",
+                    from: "${EMAIL_RECIPIENTS}", 
+                    replyTo: "${EMAIL_RECIPIENTS}"
                 )
             }
         }
