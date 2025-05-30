@@ -7,7 +7,8 @@ pipeline {
         APP_NAME = 'uni-dashboard'
         VERSION = "${env.BUILD_NUMBER}"
         SLACK_CHANNEL = '#deployments'
-        // EMAIL_RECIPIENTS = 'corrynn7487@gmail.com'
+        LATEST_IMAGE = "${DOCKER_REGISTRY}/${APP_NAME}:latest"
+        PREVIOUS_IMAGE = "${DOCKER_REGISTRY}/${APP_NAME}:previous"
     }
 
     stages {
@@ -56,12 +57,19 @@ pipeline {
             }
         }
 
-        stage('Push to Registry') {
+        stage('Tag and Push Images') {
             steps {
                 script {
-                        // empty string means Docker Hub default
                     docker.withRegistry('', 'docker-credentials') {
+                        // Pull latest as previous
+                        sh "docker pull ${LATEST_IMAGE} || echo 'No latest image to tag as previous'"
+                        sh "docker tag ${LATEST_IMAGE} ${PREVIOUS_IMAGE} || echo 'Tagging skipped'"
+                        sh "docker push ${PREVIOUS_IMAGE} || echo 'Push skipped'"
+
+                        // Push new version and set as latest
                         docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${VERSION}").push()
+                        sh "docker tag ${DOCKER_REGISTRY}/${APP_NAME}:${VERSION} ${LATEST_IMAGE}"
+                        sh "docker push ${LATEST_IMAGE}"
                     }
                 }
             }
@@ -85,20 +93,11 @@ pipeline {
             steps {
                 script {
                     try {
-                        runCmd(
-                            'docker-compose -f docker-compose.staging.yml up -d',
-                            'docker-compose -f docker-compose.staging.yml up -d'
-                        )
+                        runCmd('docker-compose -f docker-compose.staging.yml up -d', 'docker-compose -f docker-compose.staging.yml up -d')
                         sleep 30
-                        runCmd(
-                            'curl -f http://localhost:8081 || exit 1',
-                            'curl -f http://localhost:8081 || exit /b 1'
-                        )
+                        runCmd('curl -f http://localhost:8081 || exit 1', 'curl -f http://localhost:8081 || exit /b 1')
                     } catch (Exception e) {
-                        runCmd(
-                            'docker-compose -f docker-compose.staging.yml down',
-                            'docker-compose -f docker-compose.staging.yml down'
-                        )
+                        runCmd('docker-compose -f docker-compose.staging.yml down', 'docker-compose -f docker-compose.staging.yml down')
                         currentBuild.result = 'FAILURE'
                         throw e
                     }
@@ -111,28 +110,26 @@ pipeline {
             //     branch 'main'
             // }
             when {
-            expression {
-            // Compatible with the case where both env.BRANCH_NAME and GIT_BRANCH are empty or inconsistent
-            return env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main'
+                expression {
+                    // Compatible with the case where both env.BRANCH_NAME and GIT_BRANCH are empty or inconsistent
+                    return env.BRANCH_NAME == 'main' || env.GIT_BRANCH == 'origin/main' || env.GIT_BRANCH == 'main'
                 }
             }
             steps {
                 script {
                     try {
-                        runCmd(
-                            'docker-compose -f docker-compose.prod.yml up -d',
-                            'docker-compose -f docker-compose.prod.yml up -d'
-                        )
+                        runCmd('docker-compose -f docker-compose.prod.yml up -d', 'docker-compose -f docker-compose.prod.yml up -d')
                         sleep 30
-                        runCmd(
-                            'curl -f http://localhost:3100 || exit 1',
-                            'curl -f http://localhost:3100 || exit /b 1'
-                        )
+                        runCmd('curl -f http://localhost:3100 || exit 1', 'curl -f http://localhost:3100 || exit /b 1')
                     } catch (Exception e) {
-                        runCmd(
-                            'docker-compose -f docker-compose.prod.yml down',
-                            'docker-compose -f docker-compose.prod.yml down'
-                        )
+                        echo "Production deployment failed. Rolling back to previous image..."
+
+                        // Replace version env with :previous
+                        env.VERSION = "previous"
+
+                        runCmd('docker-compose -f docker-compose.prod.yml down', 'docker-compose -f docker-compose.prod.yml down')
+                        runCmd('docker-compose -f docker-compose.prod.yml up -d', 'docker-compose -f docker-compose.prod.yml up -d')
+
                         currentBuild.result = 'FAILURE'
                         throw e
                     }
